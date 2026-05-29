@@ -13,7 +13,7 @@ with sync_playwright() as p:
     print("トップページアクセス")
 
     # =========================
-    # トップ
+    # トップページ
     # =========================
     page.goto(TOP_URL)
 
@@ -32,7 +32,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(5000)
 
     # =========================
-    # 一般求人チェック
+    # 一般求人
     # =========================
     print("一般求人チェック")
 
@@ -41,25 +41,24 @@ with sync_playwright() as p:
     page.wait_for_timeout(1000)
 
     # =========================
-    # フリーワード入力
+    # フリーワード
     # =========================
     print("フリーワード入力")
 
-    input_box = page.locator('input[name="freeWordInput"]')
+    input_box = page.locator(
+        'input[name="freeWordInput"]'
+    )
 
     input_box.click()
 
-    page.keyboard.type("Python")
+    page.keyboard.type("エンジニア")
 
     page.wait_for_timeout(1000)
 
-    # 入力確認
-    value = input_box.input_value()
-
-    print("入力値:", value)
+    print("入力値:", input_box.input_value())
 
     # =========================
-    # 検索ボタンクリック
+    # 検索
     # =========================
     print("検索実行")
 
@@ -71,7 +70,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(10000)
 
     # =========================
-    # 現在URL
+    # URL
     # =========================
     print("\n現在URL:")
     print(page.url)
@@ -80,12 +79,12 @@ with sync_playwright() as p:
     print(page.title())
 
     # =========================
-    # body確認
+    # body
     # =========================
     body = page.locator("body").inner_text()
 
-    print("\n===== BODY先頭2000文字 =====\n")
+    print("\n===== BODY先頭3000文字 =====\n")
 
-    print(body[:2000])
+    print(body[:3000])
 
     browser.close()
