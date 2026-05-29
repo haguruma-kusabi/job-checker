@@ -3,6 +3,7 @@ import re
 import time
 
 with sync_playwright() as p:
+
     browser = p.chromium.launch(headless=True)
 
     page = browser.new_page()
@@ -15,7 +16,7 @@ with sync_playwright() as p:
     )
 
     # =========================
-    # 求人検索へ
+    # 求人検索
     # =========================
 
     print("求人情報検索クリック")
@@ -41,7 +42,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(1000)
 
     # =========================
-    # 就業場所選択
+    # 沖縄選択
     # =========================
 
     print("就業場所選択")
@@ -55,12 +56,14 @@ with sync_playwright() as p:
 
     print("沖縄選択")
 
-    # hidden checkbox をJSで直接ON
     page.evaluate("""
     () => {
-        const checkbox = document.querySelector('#ID_skCheck47947');
+
+        const checkbox =
+            document.querySelector('#ID_skCheck47947');
 
         if (checkbox) {
+
             checkbox.checked = true;
 
             checkbox.dispatchEvent(
@@ -86,12 +89,27 @@ with sync_playwright() as p:
 
     print("職種カテゴリ選択")
 
-    # 「警備・ビル等の管理」
-    page.locator(
-        'label[for="ID_daiEasyShokusyuBox5"]'
-    ).click(force=True)
+    page.evaluate("""
+    () => {
 
-    page.wait_for_timeout(1000)
+        const labels = document.querySelectorAll("label");
+
+        for (const label of labels) {
+
+            if (
+                label.innerText.includes(
+                    "警備・ビル等の管理"
+                )
+            ) {
+
+                label.click();
+                break;
+            }
+        }
+    }
+    """)
+
+    page.wait_for_timeout(2000)
 
     # =========================
     # 検索
@@ -99,9 +117,9 @@ with sync_playwright() as p:
 
     print("検索実行")
 
-    search_button = page.locator("#ID_searchBtn")
-
-    search_button.click(force=True)
+    page.locator(
+        "#ID_searchBtn"
+    ).click(force=True)
 
     page.wait_for_load_state("domcontentloaded")
 
@@ -127,7 +145,7 @@ with sync_playwright() as p:
     print(body[:5000])
 
     # =========================
-    # スコアリング
+    # 求人抽出
     # =========================
 
     print("")
@@ -146,7 +164,7 @@ with sync_playwright() as p:
         score = 0
 
         # =====================
-        # 加点
+        # 加点条件
         # =====================
 
         if "正社員" in job:
@@ -157,40 +175,3 @@ with sync_playwright() as p:
 
         if "年間休日数：120日" in job:
             score += 20
-
-        if "経験不問" in job:
-            score += 10
-
-        if "資格不問" in job:
-            score += 10
-
-        if "時間外労働なし" in job:
-            score += 15
-
-        if "通勤手当あり" in job:
-            score += 5
-
-        if "転勤なし" in job:
-            score += 10
-
-        # =====================
-        # タイトル抽出
-        # =====================
-
-        title = "タイトル不明"
-
-        m = re.search(r"職種\s+([^\n]+)", job)
-
-        if m:
-            title = m.group(1).strip()
-
-        print(
-            f"{count + 1}. スコア:{score} / {title}"
-        )
-
-        count += 1
-
-        if count >= 20:
-            break
-
-    browser.close()
