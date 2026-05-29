@@ -13,26 +13,24 @@ with sync_playwright() as p:
 
     page.wait_for_timeout(5000)
 
-    print("現在URL:")
-    print(page.url)
-
-    print("\nタイトル:")
-    print(page.title())
-
-    print("\nリンク一覧取得")
+    print("\n===== 求人系リンク探索 =====\n")
 
     links = page.locator("a")
 
     count = links.count()
 
-    print(f"リンク数: {count}")
+    for i in range(count):
+        try:
+            text = links.nth(i).inner_text().strip()
+            href = links.nth(i).get_attribute("href")
 
-    for i in range(min(count, 20)):
-        text = links.nth(i).inner_text()
-        href = links.nth(i).get_attribute("href")
+            # ★求人系だけ表示
+            if "求人" in text or "検索" in text:
+                print("-" * 40)
+                print("text:", text)
+                print("href:", href)
 
-        print("-" * 40)
-        print("text:", text)
-        print("href:", href)
+        except:
+            pass
 
     browser.close()
