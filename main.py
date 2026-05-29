@@ -13,27 +13,47 @@ with sync_playwright() as p:
 
     page.wait_for_timeout(5000)
 
-    # =========================
-    # 求人情報検索クリック
-    # =========================
-    print("求人情報検索クリック")
-
+    # 求人情報検索へ
     page.get_by_role("link", name="求人情報検索").first.click()
 
     page.wait_for_timeout(5000)
 
-    # =========================
-    # 結果確認
-    # =========================
-    print("\n現在URL:")
-    print(page.url)
+    print("\n===== input一覧 =====\n")
 
-    print("\nタイトル:")
-    print(page.title())
+    inputs = page.locator("input")
 
-    html = page.content()
+    input_count = inputs.count()
 
-    print("\n===== HTML先頭1000文字 =====\n")
-    print(html[:1000])
+    for i in range(input_count):
+        try:
+            elem = inputs.nth(i)
+
+            input_type = elem.get_attribute("type")
+            input_name = elem.get_attribute("name")
+            input_id = elem.get_attribute("id")
+
+            print("-" * 40)
+            print("type:", input_type)
+            print("name:", input_name)
+            print("id:", input_id)
+
+        except:
+            pass
+
+    print("\n===== button一覧 =====\n")
+
+    buttons = page.locator("button")
+
+    button_count = buttons.count()
+
+    for i in range(button_count):
+        try:
+            text = buttons.nth(i).inner_text()
+
+            print("-" * 40)
+            print(text)
+
+        except:
+            pass
 
     browser.close()
