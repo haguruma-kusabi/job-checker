@@ -4,6 +4,7 @@ import time
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
+
     page = browser.new_page()
 
     print("トップページアクセス")
@@ -12,6 +13,10 @@ with sync_playwright() as p:
         "https://www.hellowork.mhlw.go.jp/",
         wait_until="domcontentloaded"
     )
+
+    # =========================
+    # 求人検索へ
+    # =========================
 
     print("求人情報検索クリック")
 
@@ -22,9 +27,18 @@ with sync_playwright() as p:
 
     page.wait_for_load_state("domcontentloaded")
 
+    # =========================
+    # 一般求人
+    # =========================
+
     print("一般求人チェック")
 
-    page.get_by_text("一般求人", exact=True).click()
+    page.get_by_text(
+        "一般求人",
+        exact=True
+    ).click()
+
+    page.wait_for_timeout(1000)
 
     # =========================
     # 就業場所選択
@@ -37,65 +51,56 @@ with sync_playwright() as p:
         name=re.compile("都道府県から選択")
     ).click()
 
-    # モーダル表示待機
     page.wait_for_timeout(2000)
 
     print("沖縄選択")
 
-    # JSで直接チェック
+    # hidden checkbox をJSで直接ON
     page.evaluate("""
-        () => {
-            const el = document.querySelector('#ID_skCheck47947');
-            if (el) {
-                el.checked = true;
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+    () => {
+        const checkbox = document.querySelector('#ID_skCheck47947');
+
+        if (checkbox) {
+            checkbox.checked = true;
+
+            checkbox.dispatchEvent(
+                new Event('change', { bubbles: true })
+            );
         }
+    }
     """)
 
     page.wait_for_timeout(1000)
 
     print("都道府県決定")
 
-    # 決定ボタン
     page.locator("button").filter(
         has_text=re.compile("決定")
-    ).first.click()
+    ).first.click(force=True)
 
     page.wait_for_timeout(2000)
 
     # =========================
-    # 職種カテゴリ選択
+    # 職種カテゴリ
     # =========================
 
     print("職種カテゴリ選択")
 
-    # ラベル直接クリック
+    # 「警備・ビル等の管理」
     page.locator(
-        'label[for="ID_daiEasyShokusyuBox6"]'
-    ).click()
+        'label[for="ID_daiEasyShokusyuBox5"]'
+    ).click(force=True)
 
     page.wait_for_timeout(1000)
 
     # =========================
-    # フリーワード
-    # =========================
-
-    print("フリーワード入力")
-
-    keyword_box = page.locator('input[name="freeWord"]')
-
-    keyword_box.fill("")
-
-    # =========================
-    # 検索実行
+    # 検索
     # =========================
 
     print("検索実行")
 
     search_button = page.locator("#ID_searchBtn")
 
-    # force=Trueでモーダル干渉回避
     search_button.click(force=True)
 
     page.wait_for_load_state("domcontentloaded")
@@ -103,7 +108,7 @@ with sync_playwright() as p:
     time.sleep(5)
 
     # =========================
-    # 結果表示
+    # 結果確認
     # =========================
 
     print("")
@@ -122,7 +127,7 @@ with sync_playwright() as p:
     print(body[:5000])
 
     # =========================
-    # 求人抽出
+    # スコアリング
     # =========================
 
     print("")
@@ -141,7 +146,7 @@ with sync_playwright() as p:
         score = 0
 
         # =====================
-        # 加点条件
+        # 加点
         # =====================
 
         if "正社員" in job:
@@ -179,7 +184,9 @@ with sync_playwright() as p:
         if m:
             title = m.group(1).strip()
 
-        print(f"{count+1}. スコア:{score} / {title}")
+        print(
+            f"{count + 1}. スコア:{score} / {title}"
+        )
 
         count += 1
 
