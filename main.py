@@ -1,6 +1,5 @@
 from playwright.sync_api import sync_playwright
 import re
-import time
 
 # =========================
 # スコア計算
@@ -41,23 +40,21 @@ def calculate_score(text):
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
+
     page = browser.new_page()
 
     print("トップページアクセス")
 
     page.goto(
-        "https://www.hellowork.mhlw.go.jp/index.html",
+        "https://www.hellowork.mhlw.go.jp/",
         wait_until="domcontentloaded"
     )
 
-    # =========================
-    # 求人情報検索
-    # =========================
     print("求人情報検索クリック")
 
     page.goto(
         "https://www.hellowork.mhlw.go.jp/kensaku/GECA110010.do?action=initDisp&screenId=GECA110010",
-        wait_until="domcontentloaded"
+        wait_until="networkidle"
     )
 
     # =========================
@@ -65,57 +62,56 @@ with sync_playwright() as p:
     # =========================
     print("一般求人チェック")
 
-    page.locator('label[for="ID_ippan"]').click()
+    page.wait_for_timeout(3000)
+
+    ippan = page.get_by_role("radio", name="一般求人")
+
+    if ippan.count() > 0:
+        ippan.first.check(force=True)
 
     # =========================
-    # 就業場所選択
+    # 就業場所
     # =========================
     print("就業場所選択")
 
-    page.locator("#ID_todohukenHiddenAccoBtn").click()
+    page.locator("#ID_todohukenHiddenAccoBtn").click(force=True)
 
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(3000)
 
-    # =========================
-    # 沖縄県選択
-    # =========================
     print("沖縄選択")
 
+    # 沖縄県
     page.locator("#ID_skCheck47947").check(force=True)
 
-    # =========================
-    # 決定ボタン
-    # =========================
+    page.wait_for_timeout(1000)
+
     print("都道府県決定")
 
-    page.locator('button:has-text("決定")').last.click()
+    page.get_by_role("button", name=re.compile("決定")).last.click(force=True)
 
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(3000)
 
     # =========================
-    # 職種カテゴリ選択
+    # 職種カテゴリ
     # =========================
     print("職種カテゴリ選択")
 
     # 警備・ビル等の管理
-    # 実checkboxを直接操作
     page.locator("#ID_daiEasyShokusyuBox5").check(force=True)
 
-    page.wait_for_timeout(1000)
+    page.wait_for_timeout(2000)
 
     # =========================
     # 検索実行
     # =========================
     print("検索実行")
 
-    search_button = page.locator("#ID_searchBtn")
-
-    search_button.click(force=True)
+    page.locator("#ID_searchBtn").click(force=True)
 
     page.wait_for_timeout(5000)
 
     # =========================
-    # 結果確認
+    # 結果表示
     # =========================
     print("\n現在URL:\n")
     print(page.url)
@@ -126,7 +122,7 @@ with sync_playwright() as p:
     body_text = page.locator("body").inner_text()
 
     print("\n===== 検索結果先頭 =====\n")
-    print(body_text[:3000])
+    print(body_text[:5000])
 
     # =========================
     # 求人抽出
@@ -137,10 +133,11 @@ with sync_playwright() as p:
 
     jobs = re.findall(pattern, body_text, re.S)
 
-    if not jobs:
+    if len(jobs) == 0:
         print("求人が取得できませんでした")
     else:
         for i, job in enumerate(jobs[:10], start=1):
+
             clean_job = " ".join(job.split())
 
             score = calculate_score(clean_job)
