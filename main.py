@@ -2,176 +2,151 @@ from playwright.sync_api import sync_playwright
 import re
 import time
 
+# =========================
+# スコア計算
+# =========================
+def calculate_score(text):
+    score = 50
+
+    plus_keywords = [
+        "未経験",
+        "資格不問",
+        "学歴不問",
+        "土日休",
+        "年間休日120",
+        "賞与",
+        "正社員",
+        "残業なし",
+        "転勤なし",
+        "通勤手当",
+    ]
+
+    minus_keywords = [
+        "交通誘導",
+        "夜勤",
+        "契約社員",
+        "警備員",
+    ]
+
+    for keyword in plus_keywords:
+        if keyword in text:
+            score += 10
+
+    for keyword in minus_keywords:
+        if keyword in text:
+            score -= 10
+
+    return max(0, min(score, 100))
+
+
 with sync_playwright() as p:
-
     browser = p.chromium.launch(headless=True)
-
     page = browser.new_page()
 
     print("トップページアクセス")
 
     page.goto(
-        "https://www.hellowork.mhlw.go.jp/",
+        "https://www.hellowork.mhlw.go.jp/index.html",
         wait_until="domcontentloaded"
     )
 
     # =========================
-    # 求人検索
+    # 求人情報検索
     # =========================
-
     print("求人情報検索クリック")
 
-    page.get_by_role(
-        "link",
-        name=re.compile("求人情報検索")
-    ).click()
-
-    page.wait_for_load_state("domcontentloaded")
+    page.goto(
+        "https://www.hellowork.mhlw.go.jp/kensaku/GECA110010.do?action=initDisp&screenId=GECA110010",
+        wait_until="domcontentloaded"
+    )
 
     # =========================
     # 一般求人
     # =========================
-
     print("一般求人チェック")
 
-    page.get_by_text(
-        "一般求人",
-        exact=True
-    ).click()
-
-    page.wait_for_timeout(1000)
+    page.locator('label[for="ID_ippan"]').click()
 
     # =========================
-    # 沖縄選択
+    # 就業場所選択
     # =========================
-
     print("就業場所選択")
 
-    page.get_by_role(
-        "button",
-        name=re.compile("都道府県から選択")
-    ).click()
+    page.locator("#ID_todohukenHiddenAccoBtn").click()
 
     page.wait_for_timeout(2000)
 
+    # =========================
+    # 沖縄県選択
+    # =========================
     print("沖縄選択")
 
-    page.evaluate("""
-    () => {
+    page.locator("#ID_skCheck47947").check(force=True)
 
-        const checkbox =
-            document.querySelector('#ID_skCheck47947');
+    # =========================
+    # 決定ボタン
+    # =========================
+    print("都道府県決定")
 
-        if (checkbox) {
+    page.locator('button:has-text("決定")').last.click()
 
-            checkbox.checked = true;
+    page.wait_for_timeout(2000)
 
-            checkbox.dispatchEvent(
-                new Event('change', { bubbles: true })
-            );
-        }
-    }
-    """)
+    # =========================
+    # 職種カテゴリ選択
+    # =========================
+    print("職種カテゴリ選択")
+
+    # 警備・ビル等の管理
+    # 実checkboxを直接操作
+    page.locator("#ID_daiEasyShokusyuBox5").check(force=True)
 
     page.wait_for_timeout(1000)
 
-    print("都道府県決定")
-
-    page.locator("button").filter(
-        has_text=re.compile("決定")
-    ).first.click(force=True)
-
-    page.wait_for_timeout(2000)
-
     # =========================
-    # 職種カテゴリ
+    # 検索実行
     # =========================
-
-    print("職種カテゴリ選択")
-
-    page.evaluate("""
-    () => {
-
-        const labels = document.querySelectorAll("label");
-
-        for (const label of labels) {
-
-            if (
-                label.innerText.includes(
-                    "警備・ビル等の管理"
-                )
-            ) {
-
-                label.click();
-                break;
-            }
-        }
-    }
-    """)
-
-    page.wait_for_timeout(2000)
-
-    # =========================
-    # 検索
-    # =========================
-
     print("検索実行")
 
-    page.locator(
-        "#ID_searchBtn"
-    ).click(force=True)
+    search_button = page.locator("#ID_searchBtn")
 
-    page.wait_for_load_state("domcontentloaded")
+    search_button.click(force=True)
 
-    time.sleep(5)
+    page.wait_for_timeout(5000)
 
     # =========================
     # 結果確認
     # =========================
-
-    print("")
-    print("現在URL:")
+    print("\n現在URL:\n")
     print(page.url)
 
-    print("")
-    print("タイトル:")
+    print("\nタイトル:\n")
     print(page.title())
 
-    body = page.locator("body").inner_text()
+    body_text = page.locator("body").inner_text()
 
-    print("")
-    print("===== 検索結果先頭 =====")
-    print("")
-    print(body[:5000])
+    print("\n===== 検索結果先頭 =====\n")
+    print(body_text[:3000])
 
     # =========================
     # 求人抽出
     # =========================
+    print("\n===== スコアリング =====\n")
 
-    print("")
-    print("===== スコアリング =====")
-    print("")
+    pattern = r"職種\s+(.*?)\s+職種解説"
 
-    jobs = body.split("求人番号")
+    jobs = re.findall(pattern, body_text, re.S)
 
-    count = 0
+    if not jobs:
+        print("求人が取得できませんでした")
+    else:
+        for i, job in enumerate(jobs[:10], start=1):
+            clean_job = " ".join(job.split())
 
-    for job in jobs:
+            score = calculate_score(clean_job)
 
-        if "事業所名" not in job:
-            continue
+            print(f"{i}. スコア:{score}")
+            print(clean_job)
+            print("-" * 50)
 
-        score = 0
-
-        # =====================
-        # 加点条件
-        # =====================
-
-        if "正社員" in job:
-            score += 20
-
-        if "土日" in job:
-            score += 15
-
-        if "年間休日数：120日" in job:
-            score += 20
+    browser.close()
