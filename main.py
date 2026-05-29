@@ -1,27 +1,20 @@
 from playwright.sync_api import sync_playwright
+import time
 
-TOP_URL = "https://www.hellowork.mhlw.go.jp/index.html"
+KEYWORD = "エンジニア"
 
 with sync_playwright() as p:
-
-    browser = p.chromium.launch(
-        headless=True
-    )
-
+    browser = p.chromium.launch(headless=True)
     page = browser.new_page()
 
     print("トップページアクセス")
 
-    # =========================
-    # トップページ
-    # =========================
-    page.goto(TOP_URL)
+    page.goto(
+        "https://www.hellowork.mhlw.go.jp/",
+        wait_until="networkidle"
+    )
 
-    page.wait_for_timeout(5000)
-
-    # =========================
-    # 求人検索へ
-    # =========================
+    # 求人情報検索クリック
     print("求人情報検索クリック")
 
     page.get_by_role(
@@ -29,62 +22,51 @@ with sync_playwright() as p:
         name="求人情報検索"
     ).first.click()
 
-    page.wait_for_timeout(5000)
+    page.wait_for_load_state("networkidle")
 
-    # =========================
-    # 一般求人
-    # =========================
+    # 一般求人チェック
     print("一般求人チェック")
 
-    page.check("#ID_ippanCKBox1")
+    page.locator("#ID_ippanCKBox1").check()
 
-    page.wait_for_timeout(1000)
-
-    # =========================
-    # フリーワード
-    # =========================
+    # フリーワード入力
     print("フリーワード入力")
+    print(f"入力値: {KEYWORD}")
 
-    input_box = page.locator(
-        'input[name="freeWordInput"]'
-    )
+    page.locator("#ID_freeWordInput").fill(KEYWORD)
 
-    input_box.click()
-
-    page.keyboard.type("エンジニア")
-
-    page.wait_for_timeout(1000)
-
-    print("入力値:", input_box.input_value())
-
-    # =========================
-    # 検索
-    # =========================
+    # 検索実行
     print("検索実行")
 
-    page.get_by_role(
-        "button",
-        name="検索する"
-    ).click()
+    page.locator("#ID_searchShosaiBtn").click()
 
-    page.wait_for_timeout(10000)
+    # 検索結果待機
+    page.wait_for_timeout(5000)
 
-    # =========================
-    # URL
-    # =========================
     print("\n現在URL:")
     print(page.url)
 
     print("\nタイトル:")
     print(page.title())
 
-    # =========================
-    # body
-    # =========================
     body = page.locator("body").inner_text()
 
-    print("\n===== BODY先頭3000文字 =====\n")
+    if "検索結果" in body:
+        print("\n検索成功")
 
-    print(body[:3000])
+        # 求人タイトル取得
+        jobs = page.locator("text=職種").all()
+
+        print(f"\n取得件数: {len(jobs)}")
+
+        # 職種ラベル周辺を取得
+        text = body.split("検索結果")[-1]
+
+        print("\n===== 検索結果先頭 =====\n")
+        print(text[:5000])
+
+    else:
+        print("\n検索失敗")
+        print(body[:3000])
 
     browser.close()
