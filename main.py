@@ -100,20 +100,26 @@ with sync_playwright() as p:
 
     page.locator("#ID_ippanCKBox1").check()
 
-    # =========================
-    # 就業場所
-    # =========================
+# =========================
+# 就業場所
+# =========================
 
-    print("就業場所選択")
+print("就業場所選択")
 
-    page.get_by_text("都道府県から選択").click()
+page.locator("#ID_todohukenHiddenAccoBtn").click()
 
-    page.wait_for_timeout(2000)
+page.wait_for_timeout(2000)
 
-    # 沖縄選択
-    page.get_by_text(AREA).click()
+print("沖縄選択")
 
-    page.wait_for_timeout(2000)
+page.get_by_text("沖縄県").click()
+
+page.wait_for_timeout(1000)
+
+# 決定ボタン
+page.get_by_role("button", name="決定").click()
+
+page.wait_for_timeout(2000)
 
     # =========================
     # 職種カテゴリ
