@@ -105,24 +105,26 @@ with sync_playwright() as p:
         name="都道府県から選択"
     ).click()
 
-    # モーダル表示待ち
-    page.wait_for_selector("#ID_skCheck47947", state="visible")
- 
+    # モーダル生成待ち
+    page.wait_for_timeout(3000)
+
     print("沖縄選択")
 
-    # force=True で不可視判定を無視
-    page.locator("#ID_skCheck47947").click(force=True)
+    # hidden checkbox を force click
+    page.locator(
+        "#ID_skCheck47947"
+    ).click(force=True)
 
     page.wait_for_timeout(1000)
 
-    print("選択ボタン")
+    print("選択ボタンクリック")
 
     page.get_by_role(
         "button",
         name="選択"
     ).click()
 
-    page.wait_for_load_state("networkidle")
+    page.wait_for_timeout(3000)
 
     # =========================
     # 職種カテゴリ設定
@@ -135,7 +137,7 @@ with sync_playwright() as p:
         exact=True
     ).click()
 
-    page.wait_for_timeout(500)
+    page.wait_for_timeout(1000)
 
     # =========================
     # 検索実行
@@ -154,13 +156,16 @@ with sync_playwright() as p:
 
     body = page.locator("body").inner_text()
 
+    print()
     print("===== 検索結果 =====")
+    print()
 
     jobs = body.split("詳細を表示")
 
     results = []
 
     for job in jobs:
+
         if "職種" not in job:
             continue
 
@@ -230,18 +235,18 @@ with sync_playwright() as p:
             "place": place
         })
 
-    # スコア順
+    # スコア順ソート
     results.sort(
         key=lambda x: x["score"],
         reverse=True
     )
 
-    print()
-
     print("===== スコア順求人一覧 =====")
 
     for i, r in enumerate(results[:20], start=1):
+
         print()
+
         print(f"順位: {i}")
         print(f"スコア: {r['score']}")
         print(f"職種: {r['title']}")
