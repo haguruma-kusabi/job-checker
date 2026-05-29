@@ -1,84 +1,28 @@
-import requests
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
-# ======================
-# 設定
-# ======================
-BASE_URL = "https://kyushoku.hellowork.mhlw.go.jp"
+URL = "https://kyushoku.hellowork.mhlw.go.jp/kyushoku/GEAA110010.do"
 
-# ★ここは必ず「検索結果ページURL」にすること
-SEARCH_URL = "https://kyushoku.hellowork.mhlw.go.jp/kyushoku/GEAA110010.do"
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
 
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
+    page = browser.new_page()
 
-# ======================
-# ① リクエスト取得
-# ======================
-res = requests.get(SEARCH_URL, headers=headers)
+    print("ページアクセス開始")
 
-# 文字化け対策（ハロワはこれ重要）
-res.encoding = res.apparent_encoding
+    page.goto(URL)
 
-html = res.text
+    # 少し待つ（重要）
+    page.wait_for_timeout(5000)
 
-# ======================
-# ② デバッグ出力（最重要）
-# ======================
-print("\n===== HTML先頭2000文字 =====\n")
-print(html[:2000])
+    html = page.content()
 
-print("\n===== HTML末尾1000文字 =====\n")
-print(html[-1000:])
+    print("\n===== HTML先頭1000文字 =====\n")
+    print(html[:1000])
 
-# ======================
-# ③ BeautifulSoup解析
-# ======================
-soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "html.parser")
 
-# ======================
-# ④ 求人抽出（リンクベース）
-# ======================
-jobs = []
+    print("\n===== title =====")
+    print(soup.title.text)
 
-for a in soup.find_all("a"):
-    text = a.get_text(strip=True)
-    href = a.get("href")
-
-    if not href:
-        continue
-
-    # ハロワ求人詳細っぽいリンクを拾う
-    if "GECA" in href or "GECC" in href or "detail" in href.lower():
-        full_url = urljoin(BASE_URL, href)
-
-        if text:
-            jobs.append({
-                "title": text,
-                "url": full_url
-            })
-
-# ======================
-# ⑤ 重複除去
-# ======================
-unique = []
-seen = set()
-
-for job in jobs:
-    if job["url"] in seen:
-        continue
-    seen.add(job["url"])
-    unique.append(job)
-
-# ======================
-# ⑥ 結果表示
-# ======================
-print("\n===== 抽出結果 =====")
-print(f"取得件数: {len(unique)}\n")
-
-for j in unique[:10]:
-    print("タイトル:", j["title"])
-    print("URL:", j["url"])
-    print("-" * 40)
+    browser.close()
