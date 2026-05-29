@@ -1,8 +1,6 @@
 name: Job Checker
 
 on:
-  schedule:
-    - cron: '0 22 * * *'
   workflow_dispatch:
 
 jobs:
@@ -19,7 +17,14 @@ jobs:
           python-version: '3.11'
 
       - name: ライブラリ導入
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+
+      # ★Playwrightブラウザ導入
+      - name: Playwright install
+        run: |
+          playwright install --with-deps
 
       - name: Python実行
-        run: python main.py
+        run: |
+          python main.py
