@@ -17,7 +17,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(5000)
 
     # =========================
-    # 求人情報検索へ
+    # 求人情報検索
     # =========================
     print("求人情報検索クリック")
 
@@ -29,7 +29,16 @@ with sync_playwright() as p:
     page.wait_for_timeout(5000)
 
     # =========================
-    # フリーワード入力
+    # 一般求人チェック
+    # =========================
+    print("一般求人チェック")
+
+    page.check('#ID_ippanCKBox1')
+
+    page.wait_for_timeout(1000)
+
+    # =========================
+    # フリーワード
     # =========================
     print("フリーワード入力")
 
@@ -38,7 +47,7 @@ with sync_playwright() as p:
         "Python"
     )
 
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(1000)
 
     # =========================
     # 検索実行
@@ -47,10 +56,10 @@ with sync_playwright() as p:
 
     page.click('#ID_searchShosaiBtn')
 
-    page.wait_for_timeout(8000)
+    page.wait_for_timeout(10000)
 
     # =========================
-    # 結果確認
+    # URL確認
     # =========================
     print("\n現在URL:")
     print(page.url)
@@ -58,29 +67,13 @@ with sync_playwright() as p:
     print("\nタイトル:")
     print(page.title())
 
-    print("\n===== 検索結果HTML先頭1000文字 =====\n")
-
-    html = page.content()
-
-    print(html[:1000])
-
     # =========================
-    # 求人タイトル候補抽出
+    # エラーメッセージ確認
     # =========================
-    print("\n===== 求人タイトル候補 =====\n")
+    print("\n===== bodyテキスト先頭 =====\n")
 
-    links = page.locator("a")
+    body_text = page.locator("body").inner_text()
 
-    count = links.count()
-
-    for i in range(count):
-        try:
-            text = links.nth(i).inner_text().strip()
-
-            if len(text) > 10:
-                print(text)
-
-        except:
-            pass
+    print(body_text[:3000])
 
     browser.close()
