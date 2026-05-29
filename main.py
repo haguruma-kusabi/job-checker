@@ -1,258 +1,175 @@
 from playwright.sync_api import sync_playwright
+import time
 import re
 
-
-def calc_score(text):
-    score = 0
-
-    # 加点
-    if "正社員" in text:
-        score += 20
-
-    if "未経験" in text:
-        score += 15
-
-    if "経験不問" in text:
-        score += 15
-
-    if "資格不問" in text:
-        score += 10
-
-    if "週休二日制" in text:
-        score += 10
-
-    if "土日休" in text:
-        score += 10
-
-    if "年間休日数：120日" in text:
-        score += 15
-
-    if "年間休日数：121日" in text:
-        score += 15
-
-    if "年間休日数：122日" in text:
-        score += 15
-
-    if "年間休日数：123日" in text:
-        score += 15
-
-    if "転勤なし" in text:
-        score += 10
-
-    if "残業なし" in text:
-        score += 10
-
-    if "賞与" in text:
-        score += 5
-
-    if "通勤手当あり" in text:
-        score += 5
-
-    if "マイカー通勤可" in text:
-        score += 5
-
-    # 減点
-    if "夜勤" in text:
-        score -= 10
-
-    if "交代制" in text:
-        score -= 10
-
-    if "シフト制" in text:
-        score -= 5
-
-    return score
-
+KEYWORD = "警備"
+TARGET_PREF = "沖縄県"
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(
-        headless=True
-    )
-
+    browser = p.chromium.launch(headless=True)
     page = browser.new_page()
 
     print("トップページアクセス")
-
     page.goto(
         "https://www.hellowork.mhlw.go.jp/",
-        wait_until="networkidle"
+        wait_until="domcontentloaded"
     )
 
+    # 求人情報検索へ
     print("求人情報検索クリック")
+    page.get_by_role("link", name=re.compile("求人情報検索")).click()
 
-    page.get_by_role(
-        "link",
-        name=re.compile("求人情報検索")
-    ).click()
+    page.wait_for_load_state("domcontentloaded")
 
-    page.wait_for_load_state("networkidle")
-
+    # 一般求人
     print("一般求人チェック")
+    page.get_by_label("一般求人").check(force=True)
 
-    page.get_by_text(
-        "一般求人",
-        exact=True
-    ).click()
-
-    # =========================
-    # 就業場所設定
-    # =========================
-
+    # -----------------------------
+    # 就業場所選択
+    # -----------------------------
     print("就業場所選択")
 
     page.get_by_role(
         "button",
-        name="都道府県から選択"
+        name=re.compile("都道府県から選択")
     ).click()
 
-    # モーダル生成待ち
+    # モーダル表示待ち
     page.wait_for_timeout(3000)
 
     print("沖縄選択")
 
-    # hidden checkbox を force click
-    page.locator(
-        "#ID_skCheck47947"
-    ).click(force=True)
+    # hiddenなので JS で直接チェック
+    page.evaluate("""
+        () => {
+            const checkbox = document.querySelector('#ID_skCheck47947');
+            if (checkbox) {
+                checkbox.checked = true;
+
+                checkbox.dispatchEvent(
+                    new Event('change', { bubbles: true })
+                );
+
+                checkbox.dispatchEvent(
+                    new Event('click', { bubbles: true })
+                );
+            }
+        }
+    """)
 
     page.wait_for_timeout(1000)
 
-    print("選択ボタンクリック")
+    # 決定ボタン
+    print("都道府県決定")
 
     page.get_by_role(
         "button",
-        name="選択"
+        name=re.compile("決定|OK")
     ).click()
 
-    page.wait_for_timeout(3000)
+    page.wait_for_timeout(2000)
 
-    # =========================
-    # 職種カテゴリ設定
-    # =========================
-
+    # -----------------------------
+    # 職種カテゴリ
+    # -----------------------------
     print("職種カテゴリ選択")
 
-    page.get_by_text(
-        "警備・ビル等の管理",
-        exact=True
-    ).click()
+    page.get_by_text("IT・Web・エンジニア").click()
 
     page.wait_for_timeout(1000)
 
-    # =========================
-    # 検索実行
-    # =========================
+    # -----------------------------
+    # フリーワード
+    # -----------------------------
+    print("フリーワード入力")
 
+    keyword_box = page.locator('input[name="freeWord"]')
+
+    if keyword_box.count() > 0:
+        keyword_box.first.fill(KEYWORD)
+
+    # -----------------------------
+    # 検索実行
+    # -----------------------------
     print("検索実行")
 
     page.get_by_role(
         "button",
-        name="検索する"
+        name=re.compile("検索する")
     ).click()
 
-    page.wait_for_load_state("networkidle")
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_timeout(5000)
 
-    print("検索結果取得")
+    print("\n現在URL:")
+    print(page.url)
+
+    print("\nタイトル:")
+    print(page.title())
 
     body = page.locator("body").inner_text()
 
-    print()
-    print("===== 検索結果 =====")
-    print()
+    print("\n===== 検索結果先頭 =====\n")
+    print(body[:5000])
+
+    # -----------------------------
+    # 求人スコアリング
+    # -----------------------------
+    print("\n===== スコアリング =====\n")
 
     jobs = body.split("詳細を表示")
 
-    results = []
+    scored_jobs = []
 
     for job in jobs:
+        score = 0
 
-        if "職種" not in job:
-            continue
+        if "土日休" in job:
+            score += 20
 
-        score = calc_score(job)
+        if "年間休日数：120日" in job:
+            score += 20
 
-        title_match = re.search(
-            r"職種\s+(.*?)\n",
-            job
-        )
+        if "経験不問" in job:
+            score += 15
 
-        salary_match = re.search(
-            r"([\d,]+円〜[\d,]+円)",
-            job
-        )
+        if "資格不問" in job:
+            score += 10
 
-        holiday_match = re.search(
-            r"年間休日数：(\d+)日",
-            job
-        )
+        if "正社員" in job:
+            score += 15
 
-        company_match = re.search(
-            r"事業所名\s+(.*?)\n",
-            job
-        )
+        if "転勤なし" in job:
+            score += 10
 
-        place_match = re.search(
-            r"就業場所\s+(.*?)\n",
-            job
-        )
+        if "通勤手当あり" in job:
+            score += 5
+
+        if "オンライン自主応募可" in job:
+            score += 5
+
+        title_match = re.search(r"職種\\s+(.*)", job)
 
         title = (
-            title_match.group(1)
-            if title_match
-            else "タイトル不明"
+            title_match.group(1).strip()
+            if title_match else "タイトル取得失敗"
         )
 
-        salary = (
-            salary_match.group(1)
-            if salary_match
-            else "給与不明"
-        )
-
-        holiday = (
-            holiday_match.group(1) + "日"
-            if holiday_match
-            else "記載なし"
-        )
-
-        company = (
-            company_match.group(1)
-            if company_match
-            else "事業所不明"
-        )
-
-        place = (
-            place_match.group(1)
-            if place_match
-            else "勤務地不明"
-        )
-
-        results.append({
-            "score": score,
+        scored_jobs.append({
             "title": title,
-            "salary": salary,
-            "holiday": holiday,
-            "company": company,
-            "place": place
+            "score": score
         })
 
-    # スコア順ソート
-    results.sort(
+    scored_jobs = sorted(
+        scored_jobs,
         key=lambda x: x["score"],
         reverse=True
     )
 
-    print("===== スコア順求人一覧 =====")
-
-    for i, r in enumerate(results[:20], start=1):
-
-        print()
-
-        print(f"順位: {i}")
-        print(f"スコア: {r['score']}")
-        print(f"職種: {r['title']}")
-        print(f"会社: {r['company']}")
-        print(f"勤務地: {r['place']}")
-        print(f"給与: {r['salary']}")
-        print(f"年間休日: {r['holiday']}")
+    for i, job in enumerate(scored_jobs[:10], start=1):
+        print(
+            f"{i}. スコア:{job['score']} / {job['title']}"
+        )
 
     browser.close()
