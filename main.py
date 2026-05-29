@@ -102,26 +102,25 @@ with sync_playwright() as p:
 
     page.get_by_role(
         "button",
-        name="都道府県から選択"
+    name="都道府県から選択"
     ).click()
 
-    page.wait_for_timeout(1000)
+    page.wait_for_timeout(2000)
 
     print("沖縄選択")
 
-    page.get_by_label(
-        "沖縄県",
-        exact=True
-    ).click()
-
-    page.wait_for_timeout(500)
-
-    page.get_by_role(
-        "button",
-        name="選択"
-    ).click()
+    # 沖縄県チェック
+    page.locator('label[for="ID_skCheck47947"]').click()
 
     page.wait_for_timeout(1000)
+
+    # 選択ボタン
+    page.get_by_role(
+        "button",
+    name="選択"
+    ).click()
+
+    page.wait_for_timeout(2000)
 
     # =========================
     # 職種カテゴリ設定
