@@ -99,28 +99,36 @@ with sync_playwright() as p:
     print("一般求人チェック")
 
     page.locator("#ID_ippanCKBox1").check()
+    
+    # =========================
+    # 就業場所
+    # =========================
 
-# =========================
-# 就業場所
-# =========================
+    print("就業場所選択")
 
-print("就業場所選択")
+    page.locator("#ID_todohukenHiddenAccoBtn").click()
 
-page.locator("#ID_todohukenHiddenAccoBtn").click()
+    page.wait_for_timeout(2000)
 
-page.wait_for_timeout(2000)
+    print("沖縄選択")
 
-print("沖縄選択")
+    page.get_by_text("沖縄県").click()
 
-page.get_by_text("沖縄県").click()
+    page.wait_for_timeout(1000)
 
-page.wait_for_timeout(1000)
+    # 決定
+    page.get_by_role(
+        "button",
+        name="決定"
+    ).click()
 
-# 決定ボタン
-page.get_by_role("button", name="決定").click()
+    page.wait_for_timeout(2000)
 
-page.wait_for_timeout(2000)
+    # =========================
+    # 職種カテゴリ
+    # =========================
 
+    print("職種カテゴリ選択")
     # =========================
     # 職種カテゴリ
     # =========================
