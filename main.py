@@ -39,17 +39,24 @@ def calculate_score(text):
 
 
 with sync_playwright() as p:
+
     browser = p.chromium.launch(headless=True)
 
     page = browser.new_page()
 
+    # =========================
+    # トップページ
+    # =========================
     print("トップページアクセス")
 
     page.goto(
         "https://www.hellowork.mhlw.go.jp/",
-        wait_until="domcontentloaded"
+        wait_until="networkidle"
     )
 
+    # =========================
+    # 求人検索
+    # =========================
     print("求人情報検索クリック")
 
     page.goto(
@@ -78,16 +85,36 @@ with sync_playwright() as p:
 
     page.wait_for_timeout(3000)
 
+    # =========================
+    # 沖縄選択
+    # =========================
     print("沖縄選択")
 
-    # 沖縄県
-    page.locator("#ID_skCheck47947").check(force=True)
+    page.evaluate("""
+        () => {
+            const checkbox = document.querySelector('#ID_skCheck47947');
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    """)
 
     page.wait_for_timeout(1000)
 
+    # =========================
+    # 決定
+    # =========================
     print("都道府県決定")
 
-    page.get_by_role("button", name=re.compile("決定")).last.click(force=True)
+    buttons = page.locator("button")
+
+    for i in range(buttons.count()):
+        text = buttons.nth(i).inner_text()
+
+        if "決定" in text:
+            buttons.nth(i).click(force=True)
+            break
 
     page.wait_for_timeout(3000)
 
@@ -96,8 +123,16 @@ with sync_playwright() as p:
     # =========================
     print("職種カテゴリ選択")
 
-    # 警備・ビル等の管理
-    page.locator("#ID_daiEasyShokusyuBox5").check(force=True)
+    page.evaluate("""
+        () => {
+            const checkbox = document.querySelector('#ID_daiEasyShokusyuBox5');
+
+            if (checkbox) {
+                checkbox.checked = true;
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    """)
 
     page.wait_for_timeout(2000)
 
