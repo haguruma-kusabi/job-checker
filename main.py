@@ -9,49 +9,76 @@ with sync_playwright() as p:
 
     print("トップページアクセス")
 
+    # =========================
+    # トップページ
+    # =========================
     page.goto(TOP_URL)
 
     page.wait_for_timeout(5000)
 
+    # =========================
     # 求人情報検索へ
-    page.get_by_role("link", name="求人情報検索").first.click()
+    # =========================
+    print("求人情報検索クリック")
+
+    page.get_by_role(
+        "link",
+        name="求人情報検索"
+    ).first.click()
 
     page.wait_for_timeout(5000)
 
-    print("\n===== input一覧 =====\n")
+    # =========================
+    # フリーワード入力
+    # =========================
+    print("フリーワード入力")
 
-    inputs = page.locator("input")
+    page.fill(
+        'input[name="freeWordInput"]',
+        "Python"
+    )
 
-    input_count = inputs.count()
+    page.wait_for_timeout(2000)
 
-    for i in range(input_count):
+    # =========================
+    # 検索実行
+    # =========================
+    print("検索実行")
+
+    page.click('#ID_searchShosaiBtn')
+
+    page.wait_for_timeout(8000)
+
+    # =========================
+    # 結果確認
+    # =========================
+    print("\n現在URL:")
+    print(page.url)
+
+    print("\nタイトル:")
+    print(page.title())
+
+    print("\n===== 検索結果HTML先頭1000文字 =====\n")
+
+    html = page.content()
+
+    print(html[:1000])
+
+    # =========================
+    # 求人タイトル候補抽出
+    # =========================
+    print("\n===== 求人タイトル候補 =====\n")
+
+    links = page.locator("a")
+
+    count = links.count()
+
+    for i in range(count):
         try:
-            elem = inputs.nth(i)
+            text = links.nth(i).inner_text().strip()
 
-            input_type = elem.get_attribute("type")
-            input_name = elem.get_attribute("name")
-            input_id = elem.get_attribute("id")
-
-            print("-" * 40)
-            print("type:", input_type)
-            print("name:", input_name)
-            print("id:", input_id)
-
-        except:
-            pass
-
-    print("\n===== button一覧 =====\n")
-
-    buttons = page.locator("button")
-
-    button_count = buttons.count()
-
-    for i in range(button_count):
-        try:
-            text = buttons.nth(i).inner_text()
-
-            print("-" * 40)
-            print(text)
+            if len(text) > 10:
+                print(text)
 
         except:
             pass
