@@ -18,7 +18,7 @@ with sync_playwright() as p:
     # =========================
     print("求人情報検索クリック")
 
-    page.get_by_text("求人情報検索").click()
+    page.get_by_role("link", name="求人情報検索").first.click()
 
     page.wait_for_timeout(5000)
 
