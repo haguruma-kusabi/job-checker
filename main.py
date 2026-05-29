@@ -102,25 +102,27 @@ with sync_playwright() as p:
 
     page.get_by_role(
         "button",
-    name="都道府県から選択"
+        name="都道府県から選択"
     ).click()
 
-    page.wait_for_timeout(2000)
-
+    # モーダル表示待ち
+    page.wait_for_selector("#ID_skCheck47947", state="visible")
+ 
     print("沖縄選択")
 
-    # 沖縄県チェック
-    page.locator('label[for="ID_skCheck47947"]').click()
+    # force=True で不可視判定を無視
+    page.locator("#ID_skCheck47947").click(force=True)
 
     page.wait_for_timeout(1000)
 
-    # 選択ボタン
+    print("選択ボタン")
+
     page.get_by_role(
         "button",
-    name="選択"
+        name="選択"
     ).click()
 
-    page.wait_for_timeout(2000)
+    page.wait_for_load_state("networkidle")
 
     # =========================
     # 職種カテゴリ設定
