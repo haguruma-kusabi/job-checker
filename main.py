@@ -1,28 +1,38 @@
 from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
 
-URL = "https://kyushoku.hellowork.mhlw.go.jp/kyushoku/GEAA110010.do"
+TOP_URL = "https://www.hellowork.mhlw.go.jp/index.html"
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
 
     page = browser.new_page()
 
-    print("ページアクセス開始")
+    print("トップページアクセス")
 
-    page.goto(URL)
+    page.goto(TOP_URL)
 
-    # 少し待つ（重要）
     page.wait_for_timeout(5000)
 
-    html = page.content()
+    print("現在URL:")
+    print(page.url)
 
-    print("\n===== HTML先頭1000文字 =====\n")
-    print(html[:1000])
+    print("\nタイトル:")
+    print(page.title())
 
-    soup = BeautifulSoup(html, "html.parser")
+    print("\nリンク一覧取得")
 
-    print("\n===== title =====")
-    print(soup.title.text)
+    links = page.locator("a")
+
+    count = links.count()
+
+    print(f"リンク数: {count}")
+
+    for i in range(min(count, 20)):
+        text = links.nth(i).inner_text()
+        href = links.nth(i).get_attribute("href")
+
+        print("-" * 40)
+        print("text:", text)
+        print("href:", href)
 
     browser.close()
