@@ -3,21 +3,24 @@ from playwright.sync_api import sync_playwright
 TOP_URL = "https://www.hellowork.mhlw.go.jp/index.html"
 
 with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
+
+    browser = p.chromium.launch(
+        headless=True
+    )
 
     page = browser.new_page()
 
     print("トップページアクセス")
 
     # =========================
-    # トップページ
+    # トップ
     # =========================
     page.goto(TOP_URL)
 
     page.wait_for_timeout(5000)
 
     # =========================
-    # 求人情報検索
+    # 求人検索へ
     # =========================
     print("求人情報検索クリック")
 
@@ -33,33 +36,42 @@ with sync_playwright() as p:
     # =========================
     print("一般求人チェック")
 
-    page.check('#ID_ippanCKBox1')
+    page.check("#ID_ippanCKBox1")
 
     page.wait_for_timeout(1000)
 
     # =========================
-    # フリーワード
+    # フリーワード入力
     # =========================
     print("フリーワード入力")
 
-    page.fill(
-        'input[name="freeWordInput"]',
-        "Python"
-    )
+    input_box = page.locator('input[name="freeWordInput"]')
+
+    input_box.click()
+
+    page.keyboard.type("Python")
 
     page.wait_for_timeout(1000)
 
+    # 入力確認
+    value = input_box.input_value()
+
+    print("入力値:", value)
+
     # =========================
-    # 検索実行
+    # 検索ボタンクリック
     # =========================
     print("検索実行")
 
-    page.click('#ID_searchShosaiBtn')
+    page.get_by_role(
+        "button",
+        name="検索する"
+    ).click()
 
     page.wait_for_timeout(10000)
 
     # =========================
-    # URL確認
+    # 現在URL
     # =========================
     print("\n現在URL:")
     print(page.url)
@@ -68,12 +80,12 @@ with sync_playwright() as p:
     print(page.title())
 
     # =========================
-    # エラーメッセージ確認
+    # body確認
     # =========================
-    print("\n===== bodyテキスト先頭 =====\n")
+    body = page.locator("body").inner_text()
 
-    body_text = page.locator("body").inner_text()
+    print("\n===== BODY先頭2000文字 =====\n")
 
-    print(body_text[:3000])
+    print(body[:2000])
 
     browser.close()
