@@ -2,7 +2,6 @@ from playwright.sync_api import sync_playwright
 import re
 
 KEYWORD = "警備"
-TARGET_PREF = "沖縄県"
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -79,12 +78,40 @@ with sync_playwright() as p:
     # -----------------------------
     print("都道府県決定")
 
-    page.get_by_role(
-        "button",
-        name=re.compile("決定|OK")
-    ).click()
+    page.evaluate("""
+        () => {
+            const buttons = [...document.querySelectorAll('button')];
 
-    page.wait_for_timeout(2000)
+            const target = buttons.find(btn =>
+                btn.innerText.includes('決定') ||
+                btn.innerText.includes('OK')
+            );
+
+            if (target) {
+                target.click();
+            }
+        }
+    """)
+
+    page.wait_for_timeout(3000)
+
+    # -----------------------------
+    # モーダル閉じる待機
+    # -----------------------------
+    page.wait_for_timeout(3000)
+
+    # 強制的にモーダル削除
+    page.evaluate("""
+        () => {
+            document
+                .querySelectorAll('.modal_wrap')
+                .forEach(el => el.remove());
+
+            document
+                .querySelectorAll('.modal')
+                .forEach(el => el.remove());
+        }
+    """)
 
     # -----------------------------
     # 職種カテゴリ
@@ -111,10 +138,7 @@ with sync_playwright() as p:
     # -----------------------------
     print("検索実行")
 
-    page.get_by_role(
-        "button",
-        name=re.compile("検索する")
-    ).click()
+    page.locator("#ID_searchBtn").click(force=True)
 
     page.wait_for_load_state("domcontentloaded")
 
