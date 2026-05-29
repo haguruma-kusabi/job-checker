@@ -1,15 +1,11 @@
 from playwright.sync_api import sync_playwright
 import re
-
-KEYWORD = "警備"
+import time
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     page = browser.new_page()
 
-    # -----------------------------
-    # トップページ
-    # -----------------------------
     print("トップページアクセス")
 
     page.goto(
@@ -17,9 +13,6 @@ with sync_playwright() as p:
         wait_until="domcontentloaded"
     )
 
-    # -----------------------------
-    # 求人情報検索
-    # -----------------------------
     print("求人情報検索クリック")
 
     page.get_by_role(
@@ -29,16 +22,14 @@ with sync_playwright() as p:
 
     page.wait_for_load_state("domcontentloaded")
 
-    # -----------------------------
-    # 一般求人
-    # -----------------------------
     print("一般求人チェック")
 
-    page.get_by_label("一般求人").check(force=True)
+    page.get_by_text("一般求人", exact=True).click()
 
-    # -----------------------------
+    # =========================
     # 就業場所選択
-    # -----------------------------
+    # =========================
+
     print("就業場所選択")
 
     page.get_by_role(
@@ -46,138 +37,118 @@ with sync_playwright() as p:
         name=re.compile("都道府県から選択")
     ).click()
 
-    page.wait_for_timeout(3000)
+    # モーダル表示待機
+    page.wait_for_timeout(2000)
 
-    # -----------------------------
-    # 沖縄県選択
-    # -----------------------------
     print("沖縄選択")
 
+    # JSで直接チェック
     page.evaluate("""
         () => {
-            const checkbox = document.querySelector('#ID_skCheck47947');
-
-            if (checkbox) {
-                checkbox.checked = true;
-
-                checkbox.dispatchEvent(
-                    new Event('change', { bubbles: true })
-                );
-
-                checkbox.dispatchEvent(
-                    new Event('click', { bubbles: true })
-                );
+            const el = document.querySelector('#ID_skCheck47947');
+            if (el) {
+                el.checked = true;
+                el.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }
     """)
 
     page.wait_for_timeout(1000)
 
-    # -----------------------------
-    # 都道府県決定
-    # -----------------------------
     print("都道府県決定")
 
-    page.evaluate("""
-        () => {
-            const buttons = [...document.querySelectorAll('button')];
+    # 決定ボタン
+    page.locator("button").filter(
+        has_text=re.compile("決定")
+    ).first.click()
 
-            const target = buttons.find(btn =>
-                btn.innerText.includes('決定') ||
-                btn.innerText.includes('OK')
-            );
+    page.wait_for_timeout(2000)
 
-            if (target) {
-                target.click();
-            }
-        }
-    """)
+    # =========================
+    # 職種カテゴリ選択
+    # =========================
 
-    page.wait_for_timeout(3000)
-
-    # -----------------------------
-    # モーダル閉じる待機
-    # -----------------------------
-    page.wait_for_timeout(3000)
-
-    # 強制的にモーダル削除
-    page.evaluate("""
-        () => {
-            document
-                .querySelectorAll('.modal_wrap')
-                .forEach(el => el.remove());
-
-            document
-                .querySelectorAll('.modal')
-                .forEach(el => el.remove());
-        }
-    """)
-
-    # -----------------------------
-    # 職種カテゴリ
-    # -----------------------------
     print("職種カテゴリ選択")
 
-    # 警備・ビル等の管理
-    page.locator("#ID_LdaiEasyShokusyuBox5").click()
+    # ラベル直接クリック
+    page.locator(
+        'label[for="ID_daiEasyShokusyuBox6"]'
+    ).click()
 
     page.wait_for_timeout(1000)
 
-    # -----------------------------
+    # =========================
     # フリーワード
-    # -----------------------------
+    # =========================
+
     print("フリーワード入力")
 
     keyword_box = page.locator('input[name="freeWord"]')
 
-    if keyword_box.count() > 0:
-        keyword_box.first.fill(KEYWORD)
+    keyword_box.fill("")
 
-    # -----------------------------
+    # =========================
     # 検索実行
-    # -----------------------------
+    # =========================
+
     print("検索実行")
 
-    page.locator("#ID_searchBtn").click(force=True)
+    search_button = page.locator("#ID_searchBtn")
+
+    # force=Trueでモーダル干渉回避
+    search_button.click(force=True)
 
     page.wait_for_load_state("domcontentloaded")
 
-    page.wait_for_timeout(5000)
+    time.sleep(5)
 
-    # -----------------------------
-    # 結果確認
-    # -----------------------------
-    print("\n現在URL:")
+    # =========================
+    # 結果表示
+    # =========================
+
+    print("")
+    print("現在URL:")
     print(page.url)
 
-    print("\nタイトル:")
+    print("")
+    print("タイトル:")
     print(page.title())
 
     body = page.locator("body").inner_text()
 
-    print("\n===== 検索結果先頭 =====\n")
+    print("")
+    print("===== 検索結果先頭 =====")
+    print("")
     print(body[:5000])
 
-    # -----------------------------
-    # 求人スコアリング
-    # -----------------------------
-    print("\n===== スコアリング =====\n")
+    # =========================
+    # 求人抽出
+    # =========================
 
-    jobs = body.split("詳細を表示")
+    print("")
+    print("===== スコアリング =====")
+    print("")
 
-    scored_jobs = []
+    jobs = body.split("求人番号")
+
+    count = 0
 
     for job in jobs:
+
+        if "事業所名" not in job:
+            continue
+
         score = 0
 
-        # -----------------------------
+        # =====================
         # 加点条件
-        # -----------------------------
+        # =====================
+
         if "正社員" in job:
             score += 20
 
         if "土日" in job:
-            score += 20
+            score += 15
 
         if "年間休日数：120日" in job:
             score += 20
@@ -188,52 +159,31 @@ with sync_playwright() as p:
         if "資格不問" in job:
             score += 10
 
-        if "転勤なし" in job:
-            score += 10
+        if "時間外労働なし" in job:
+            score += 15
 
         if "通勤手当あり" in job:
             score += 5
 
-        if "オンライン自主応募可" in job:
-            score += 5
+        if "転勤なし" in job:
+            score += 10
 
-        if "マイカー通勤可" in job:
-            score += 5
+        # =====================
+        # タイトル抽出
+        # =====================
 
-        # -----------------------------
-        # タイトル取得
-        # -----------------------------
-        title_match = re.search(
-            r"職種\s+(.*)",
-            job
-        )
+        title = "タイトル不明"
 
-        title = (
-            title_match.group(1).strip()
-            if title_match
-            else "タイトル取得失敗"
-        )
+        m = re.search(r"職種\s+([^\n]+)", job)
 
-        scored_jobs.append({
-            "title": title,
-            "score": score
-        })
+        if m:
+            title = m.group(1).strip()
 
-    # -----------------------------
-    # スコア順ソート
-    # -----------------------------
-    scored_jobs = sorted(
-        scored_jobs,
-        key=lambda x: x["score"],
-        reverse=True
-    )
+        print(f"{count+1}. スコア:{score} / {title}")
 
-    # -----------------------------
-    # 上位表示
-    # -----------------------------
-    for i, job in enumerate(scored_jobs[:10], start=1):
-        print(
-            f"{i}. スコア:{job['score']} / {job['title']}"
-        )
+        count += 1
+
+        if count >= 20:
+            break
 
     browser.close()
