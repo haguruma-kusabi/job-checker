@@ -327,17 +327,48 @@ with sync_playwright() as p:
     # =========================
     print("職種決定")
 
-    try:
+    buttons = page.locator(
+        "input[value='決定']"
+    )
 
-        page.locator(
-            "input[value='決定']"
-        ).first.click(force=True)
+    for i in range(buttons.count()):
 
-    except Exception as e:
+        btn = buttons.nth(i)
 
-        print("決定ボタン失敗:", e)
+        try:
+
+            if btn.is_visible():
+
+                print(
+                    f"決定ボタン押下:{i}"
+                )
+
+                btn.click(force=True)
+
+                break
+
+        except Exception as e:
+
+            print(
+                f"{i}失敗",
+                e
+            )
 
     page.wait_for_timeout(3000)
+
+    print(
+        "施設警備反映:",
+        page.locator(
+            "#ID_easyShokusyuBox501"
+        ).is_checked()
+    )
+
+    print(
+        "管理人反映:",
+        page.locator(
+            "#ID_easyShokusyuBox503"
+        ).is_checked()
+    )
 
     # =========================
     # 検索条件確認
