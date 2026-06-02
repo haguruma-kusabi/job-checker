@@ -196,9 +196,9 @@ with sync_playwright() as p:
 
         try:
 
-    print(
-        i,
-    buttons.nth(i).is_visible()
+        print(
+            i,
+        buttons.nth(i).is_visible()
             )
     
         except:
