@@ -292,6 +292,32 @@ with sync_playwright() as p:
     page.wait_for_timeout(3000)
 
     # =========================
+    # 検索条件確認
+    # =========================
+    print("===== 検索条件確認 =====")
+
+    print("都道府県")
+    print(
+        page.locator(
+            "#ID_todohukenHidden"
+        ).input_value()
+    )
+
+    print("施設警備")
+    print(
+        page.locator(
+            "#ID_easyShokusyuBox501"
+        ).is_checked()
+    )
+
+    print("管理人")
+    print(
+        page.locator(
+            "#ID_easyShokusyuBox503"
+        ).is_checked()
+    )
+
+    # =========================
     # 検索前HTML保存
     # =========================
     with open(
@@ -312,17 +338,6 @@ with sync_playwright() as p:
     # =========================
     # 検索
     # =========================
-    print("検索実行")
-
-    page.locator(
-        "#ID_searchBtn"
-    ).click(force=True)
-
-    page.wait_for_timeout(8000)
-
-    page.screenshot(
-        path="10_after_search.png"
-    )
 
     # =========================
     # 結果取得
