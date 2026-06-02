@@ -41,8 +41,15 @@ def calculate_score(text):
 
 with sync_playwright() as p:
 
+    # =========================
+    # GitHub Actions対応
+    # =========================
     browser = p.chromium.launch(
-        headless=False
+        headless=True,
+        args=[
+            "--no-sandbox",
+            "--disable-dev-shm-usage"
+        ]
     )
 
     page = browser.new_page()
@@ -69,8 +76,8 @@ with sync_playwright() as p:
             "radio",
             name="一般求人"
         ).check(force=True)
-    except:
-        pass
+    except Exception as e:
+        print("一般求人選択失敗:", e)
 
     page.wait_for_timeout(1000)
 
@@ -103,13 +110,19 @@ with sync_playwright() as p:
                         { bubbles:true }
                     )
                 );
+
+                console.log("沖縄選択成功");
             }
         }
     """)
 
     page.wait_for_timeout(1000)
 
+    # =========================
     # 都道府県決定
+    # =========================
+    print("都道府県決定")
+
     try:
 
         page.locator(
@@ -157,6 +170,8 @@ with sync_playwright() as p:
                         { bubbles:true }
                     )
                 );
+
+                console.log("カテゴリ選択成功");
             }
         }
     """)
@@ -200,6 +215,8 @@ with sync_playwright() as p:
                         { bubbles:true }
                     )
                 );
+
+                console.log("施設警備選択成功");
             }
         }
     """)
@@ -230,11 +247,32 @@ with sync_playwright() as p:
                         { bubbles:true }
                     )
                 );
+
+                console.log("マンション・ビル等管理人選択成功");
             }
         }
     """)
 
     page.wait_for_timeout(1000)
+
+    # =========================
+    # 選択状態確認
+    # =========================
+    print("職種選択状態確認")
+
+    selected_jobs = page.evaluate("""
+        () => {
+
+            return [...document.querySelectorAll(
+                'input[name="modalTmpEasyShokusyuBox"]:checked, input[name="easyShokusyuBox"]:checked'
+            )].map(x => ({
+                value:x.value,
+                id:x.id
+            }));
+        }
+    """)
+
+    print(selected_jobs)
 
     # =========================
     # モーダル決定
@@ -249,13 +287,27 @@ with sync_playwright() as p:
 
     except Exception as e:
 
-        print(e)
+        print("決定ボタン失敗:", e)
 
     page.wait_for_timeout(3000)
+
+    # =========================
+    # 検索前HTML保存
+    # =========================
+    with open(
+        "before_search.html",
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        f.write(page.content())
 
     page.screenshot(
         path="09_before_search.png"
     )
+
+    print("検索前URL")
+    print(page.url)
 
     # =========================
     # 検索
@@ -275,6 +327,7 @@ with sync_playwright() as p:
     # =========================
     # 結果取得
     # =========================
+    print("検索結果URL")
     print(page.url)
 
     body_text = page.locator(
@@ -297,6 +350,8 @@ with sync_playwright() as p:
 
         f.write(body_text)
 
+    print(body_text[:5000])
+
     # =========================
     # 求人抽出
     # =========================
@@ -312,9 +367,7 @@ with sync_playwright() as p:
 
     if not jobs:
 
-        print(
-            "求人抽出失敗"
-        )
+        print("求人抽出失敗")
 
     else:
 
