@@ -5,6 +5,7 @@ import re
 # スコア計算
 # =========================
 def calculate_score(text):
+
     score = 50
 
     plus_keywords = [
@@ -40,72 +41,67 @@ def calculate_score(text):
 
 with sync_playwright() as p:
 
-    browser = p.chromium.launch(headless=True)
+    browser = p.chromium.launch(
+        headless=False
+    )
 
     page = browser.new_page()
 
     # =========================
-    # トップページ
+    # 求人検索ページ
     # =========================
-    print("トップページアクセス")
-
-    page.goto(
-        "https://www.hellowork.mhlw.go.jp/",
-        wait_until="networkidle"
-    )
-
-    page.screenshot(path="01_top_page.png")
-
-    # =========================
-    # 求人検索
-    # =========================
-    print("求人情報検索クリック")
+    print("求人検索ページ")
 
     page.goto(
         "https://www.hellowork.mhlw.go.jp/kensaku/GECA110010.do?action=initDisp&screenId=GECA110010",
         wait_until="networkidle"
     )
 
-    page.screenshot(path="02_search_page.png")
+    page.wait_for_timeout(3000)
 
     # =========================
     # 一般求人
     # =========================
-    print("一般求人チェック")
+    print("一般求人選択")
+
+    try:
+        page.get_by_role(
+            "radio",
+            name="一般求人"
+        ).check(force=True)
+    except:
+        pass
+
+    page.wait_for_timeout(1000)
+
+    # =========================
+    # 沖縄県選択
+    # =========================
+    print("沖縄県選択")
+
+    page.locator(
+        "#ID_todohukenHiddenAccoBtn"
+    ).click(force=True)
 
     page.wait_for_timeout(3000)
-
-    ippan = page.get_by_role("radio", name="一般求人")
-
-    if ippan.count() > 0:
-        ippan.first.check(force=True)
-
-    page.screenshot(path="03_after_ippan.png")
-
-    # =========================
-    # 就業場所
-    # =========================
-    print("就業場所選択")
-
-    page.locator("#ID_todohukenHiddenAccoBtn").click(force=True)
-
-    page.wait_for_timeout(3000)
-
-    page.screenshot(path="04_prefecture_modal.png")
-
-    # =========================
-    # 沖縄選択
-    # =========================
-    print("沖縄選択")
 
     page.evaluate("""
         () => {
-            const checkbox = document.querySelector('#ID_skCheck47947');
+
+            const checkbox =
+                document.querySelector(
+                    '#ID_skCheck47947'
+                );
 
             if (checkbox) {
+
                 checkbox.checked = true;
+
                 checkbox.dispatchEvent(
-                    new Event('change', { bubbles: true })
+                    new Event(
+                        'change',
+                        { bubbles:true }
+                    )
                 );
             }
         }
@@ -113,113 +109,156 @@ with sync_playwright() as p:
 
     page.wait_for_timeout(1000)
 
-    page.screenshot(path="05_okinawa_selected.png")
-
-    # =========================
     # 都道府県決定
-    # =========================
-    print("都道府県決定")
+    try:
 
-    buttons = page.locator("button")
+        page.locator(
+            "#ID_saveBtn"
+        ).first.click(force=True)
 
-    for i in range(buttons.count()):
+    except:
 
-        text = buttons.nth(i).inner_text()
+        buttons = page.locator("button")
 
-        if "決定" in text:
-            buttons.nth(i).click(force=True)
-            break
+        for i in range(buttons.count()):
+
+            txt = buttons.nth(i).inner_text()
+
+            if "決定" in txt:
+
+                buttons.nth(i).click(
+                    force=True
+                )
+
+                break
 
     page.wait_for_timeout(3000)
 
-    page.screenshot(path="06_after_prefecture_confirm.png")
-
     # =========================
-    # 職種カテゴリ
+    # 職種カテゴリ選択
     # =========================
-    print("職種カテゴリ選択")
-
-    page.screenshot(path="07_before_jobtype.png")
+    print("警備・ビル等の管理")
 
     page.evaluate("""
         () => {
 
-            const labels =
-                [...document.querySelectorAll("label")];
+            const checkbox =
+                document.querySelector(
+                    '#ID_daiEasyShokusyuBox5'
+                );
 
-            for (const label of labels) {
+            if (checkbox) {
 
-                if (
-                    label.innerText.includes(
-                        "警備・ビル等の管理"
+                checkbox.checked = true;
+
+                checkbox.dispatchEvent(
+                    new Event(
+                        'change',
+                        { bubbles:true }
                     )
-                ) {
-
-                    const id =
-                        label.getAttribute("for");
-
-                    const checkbox =
-                        document.getElementById(id);
-
-                    if (checkbox) {
-
-                        checkbox.checked = true;
-
-                        checkbox.dispatchEvent(
-                            new Event(
-                                'change',
-                                { bubbles:true }
-                            )
-                        );
-
-                        console.log(
-                            "選択成功",
-                            id
-                        );
-                    }
-                }
+                );
             }
         }
     """)
 
     page.wait_for_timeout(2000)
 
-    page.screenshot(path="08_after_jobtype.png")
+    # =========================
+    # モーダルを開く
+    # =========================
+    print("職種モーダルを開く")
+
+    page.locator(
+        "#ID_LdaiEasyShokusyuBox5"
+    ).click(force=True)
+
+    page.wait_for_timeout(2000)
 
     # =========================
-    # モーダル確認用
+    # 施設警備
     # =========================
-    with open(
-        "jobtype_modal.html",
-        "w",
-        encoding="utf-8"
-    ) as f:
-        f.write(page.content())
+    print("施設警備選択")
 
-    modal_text = page.locator("body").inner_text()
+    page.evaluate("""
+        () => {
 
-    with open(
-        "modal_text.txt",
-        "w",
-        encoding="utf-8"
-    ) as f:
-        f.write(modal_text)
+            const cb =
+                document.querySelector(
+                    '#ID_modalTmpEasyShokusyuBox501'
+                ) ||
+                document.querySelector(
+                    '#ID_easyShokusyuBox501'
+                );
 
-    print("\n===== モーダル内テキスト =====\n")
-    print(modal_text[:3000])
+            if (cb) {
 
-    # =========================
-    # 検索前確認
-    # =========================
-    print("検索実行前")
+                cb.checked = true;
 
-    page.screenshot(path="09_before_search.png")
-
-    print("検索前URL")
-    print(page.url)
+                cb.dispatchEvent(
+                    new Event(
+                        'change',
+                        { bubbles:true }
+                    )
+                );
+            }
+        }
+    """)
 
     # =========================
-    # 検索実行
+    # マンション・ビル等管理人
+    # =========================
+    print("マンション・ビル等管理人選択")
+
+    page.evaluate("""
+        () => {
+
+            const cb =
+                document.querySelector(
+                    '#ID_modalTmpEasyShokusyuBox503'
+                ) ||
+                document.querySelector(
+                    '#ID_easyShokusyuBox503'
+                );
+
+            if (cb) {
+
+                cb.checked = true;
+
+                cb.dispatchEvent(
+                    new Event(
+                        'change',
+                        { bubbles:true }
+                    )
+                );
+            }
+        }
+    """)
+
+    page.wait_for_timeout(1000)
+
+    # =========================
+    # モーダル決定
+    # =========================
+    print("職種決定")
+
+    try:
+
+        page.locator(
+            "input[value='決定']"
+        ).first.click(force=True)
+
+    except Exception as e:
+
+        print(e)
+
+    page.wait_for_timeout(3000)
+
+    page.screenshot(
+        path="09_before_search.png"
+    )
+
+    # =========================
+    # 検索
     # =========================
     print("検索実行")
 
@@ -227,38 +266,35 @@ with sync_playwright() as p:
         "#ID_searchBtn"
     ).click(force=True)
 
-    page.wait_for_timeout(5000)
+    page.wait_for_timeout(8000)
 
-    page.screenshot(path="10_after_search.png")
+    page.screenshot(
+        path="10_after_search.png"
+    )
 
     # =========================
-    # 結果表示
+    # 結果取得
     # =========================
-    print("\n現在URL:\n")
     print(page.url)
 
-    print("\nタイトル:\n")
-    print(page.title())
+    body_text = page.locator(
+        "body"
+    ).inner_text()
 
-    body_text = page.locator("body").inner_text()
-
-    print("\n===== 検索結果先頭 =====\n")
-    print(body_text[:5000])
-
-    # HTML保存
     with open(
         "result.html",
         "w",
         encoding="utf-8"
     ) as f:
+
         f.write(page.content())
 
-    # BODY保存
     with open(
         "body.txt",
         "w",
         encoding="utf-8"
     ) as f:
+
         f.write(body_text)
 
     # =========================
@@ -274,31 +310,33 @@ with sync_playwright() as p:
         re.S
     )
 
-    if len(jobs) == 0:
+    if not jobs:
 
-        print("求人が取得できませんでした")
+        print(
+            "求人抽出失敗"
+        )
 
     else:
 
         for i, job in enumerate(
-            jobs[:10],
+            jobs[:20],
             start=1
         ):
 
-            clean_job = " ".join(
+            text = " ".join(
                 job.split()
             )
 
             score = calculate_score(
-                clean_job
+                text
             )
 
             print(
                 f"{i}. スコア:{score}"
             )
 
-            print(clean_job)
+            print(text)
 
-            print("-" * 50)
+            print("-" * 80)
 
     browser.close()
