@@ -101,9 +101,12 @@ with sync_playwright() as p:
     page.evaluate("""
         () => {
             const checkbox = document.querySelector('#ID_skCheck47947');
+
             if (checkbox) {
                 checkbox.checked = true;
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                checkbox.dispatchEvent(
+                    new Event('change', { bubbles: true })
+                );
             }
         }
     """)
@@ -113,13 +116,14 @@ with sync_playwright() as p:
     page.screenshot(path="05_okinawa_selected.png")
 
     # =========================
-    # 決定
+    # 都道府県決定
     # =========================
     print("都道府県決定")
 
     buttons = page.locator("button")
 
     for i in range(buttons.count()):
+
         text = buttons.nth(i).inner_text()
 
         if "決定" in text:
@@ -140,25 +144,38 @@ with sync_playwright() as p:
     page.evaluate("""
         () => {
 
-            const labels = [...document.querySelectorAll("label")];
+            const labels =
+                [...document.querySelectorAll("label")];
 
             for (const label of labels) {
 
-                if (label.innerText.includes("警備・ビル等の管理")) {
+                if (
+                    label.innerText.includes(
+                        "警備・ビル等の管理"
+                    )
+                ) {
 
-                    const id = label.getAttribute("for");
+                    const id =
+                        label.getAttribute("for");
 
-                    const checkbox = document.getElementById(id);
+                    const checkbox =
+                        document.getElementById(id);
 
                     if (checkbox) {
 
                         checkbox.checked = true;
 
                         checkbox.dispatchEvent(
-                            new Event('change', { bubbles:true })
+                            new Event(
+                                'change',
+                                { bubbles:true }
+                            )
                         );
 
-                        console.log("選択成功", id);
+                        console.log(
+                            "選択成功",
+                            id
+                        );
                     }
                 }
             }
@@ -168,6 +185,28 @@ with sync_playwright() as p:
     page.wait_for_timeout(2000)
 
     page.screenshot(path="08_after_jobtype.png")
+
+    # =========================
+    # モーダル確認用
+    # =========================
+    with open(
+        "jobtype_modal.html",
+        "w",
+        encoding="utf-8"
+    ) as f:
+        f.write(page.content())
+
+    modal_text = page.locator("body").inner_text()
+
+    with open(
+        "modal_text.txt",
+        "w",
+        encoding="utf-8"
+    ) as f:
+        f.write(modal_text)
+
+    print("\n===== モーダル内テキスト =====\n")
+    print(modal_text[:3000])
 
     # =========================
     # 検索前確認
@@ -184,7 +223,9 @@ with sync_playwright() as p:
     # =========================
     print("検索実行")
 
-    page.locator("#ID_searchBtn").click(force=True)
+    page.locator(
+        "#ID_searchBtn"
+    ).click(force=True)
 
     page.wait_for_timeout(5000)
 
@@ -204,12 +245,20 @@ with sync_playwright() as p:
     print("\n===== 検索結果先頭 =====\n")
     print(body_text[:5000])
 
-    # HTMLも保存
-    with open("result.html", "w", encoding="utf-8") as f:
+    # HTML保存
+    with open(
+        "result.html",
+        "w",
+        encoding="utf-8"
+    ) as f:
         f.write(page.content())
 
-    # BODY全文も保存
-    with open("body.txt", "w", encoding="utf-8") as f:
+    # BODY保存
+    with open(
+        "body.txt",
+        "w",
+        encoding="utf-8"
+    ) as f:
         f.write(body_text)
 
     # =========================
@@ -219,19 +268,37 @@ with sync_playwright() as p:
 
     pattern = r"職種\s+(.*?)\s+職種解説"
 
-    jobs = re.findall(pattern, body_text, re.S)
+    jobs = re.findall(
+        pattern,
+        body_text,
+        re.S
+    )
 
     if len(jobs) == 0:
+
         print("求人が取得できませんでした")
+
     else:
-        for i, job in enumerate(jobs[:10], start=1):
 
-            clean_job = " ".join(job.split())
+        for i, job in enumerate(
+            jobs[:10],
+            start=1
+        ):
 
-            score = calculate_score(clean_job)
+            clean_job = " ".join(
+                job.split()
+            )
 
-            print(f"{i}. スコア:{score}")
+            score = calculate_score(
+                clean_job
+            )
+
+            print(
+                f"{i}. スコア:{score}"
+            )
+
             print(clean_job)
+
             print("-" * 50)
 
     browser.close()
