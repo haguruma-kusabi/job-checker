@@ -14,7 +14,7 @@ jobs:
       - name: Python準備
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: ライブラリ導入
         run: |
@@ -28,9 +28,9 @@ jobs:
         run: |
           python main.py
 
-      - name: デバッグファイル保存
-        if: always()
+      - name: 結果保存
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: debug-files
           path: |
