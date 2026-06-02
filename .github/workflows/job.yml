@@ -20,7 +20,6 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      # ★Playwrightブラウザ導入
       - name: Playwright install
         run: |
           playwright install --with-deps
@@ -28,3 +27,13 @@ jobs:
       - name: Python実行
         run: |
           python main.py
+
+      - name: デバッグファイル保存
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-files
+          path: |
+            *.png
+            *.html
+            *.txt
