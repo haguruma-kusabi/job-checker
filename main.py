@@ -202,7 +202,7 @@ with sync_playwright() as p:
                   )
     
         except:
-        pass
+               pass
 
     page.locator(
         "#ID_LdaiEasyShokusyuBox5"
