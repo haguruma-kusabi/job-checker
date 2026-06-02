@@ -192,6 +192,33 @@ with sync_playwright() as p:
     # =========================
     # 施設警備
     # =========================
+    print("施設警備要素確認")
+
+    print(
+        page.locator(
+            "#ID_easyShokusyuBox501"
+        ).count()
+　　　　)
+
+　　　　print(
+　　　　    page.locator(
+        "#ID_modalTmpEasyShokusyuBox501"
+        ).count()
+    )
+    print("管理人要素確認")
+
+    print(
+        page.locator(
+            "#ID_easyShokusyuBox503"
+        ).count()
+    )
+
+    print(
+        page.locator(
+            "#ID_modalTmpEasyShokusyuBox503"
+        ).count()
+    )
+
     print("施設警備選択")
 
     page.evaluate("""
