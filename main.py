@@ -183,6 +183,27 @@ with sync_playwright() as p:
     # =========================
     print("職種モーダルを開く")
 
+        buttons = page.locator(
+        "input[value='決定']"
+    )
+
+    print(
+        "決定ボタン数:",
+        buttons.count()
+    )
+
+    for i in range(buttons.count()):
+
+        try:
+
+            print(
+                i,
+                buttons.nth(i).is_visible()
+            )
+    
+        except:
+            pass
+
     page.locator(
         "#ID_LdaiEasyShokusyuBox5"
     ).click(force=True)
