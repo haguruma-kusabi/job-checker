@@ -417,12 +417,21 @@ with sync_playwright() as p:
     # =========================
     # 検索
     # =========================
-    print("検索実行")
+    
+    print("===== 検索直前URL =====")
+    print(page.url)
 
-    page.locator(
-        "#ID_searchBtn"
-    ).click(force=True)
+    with open(
+        "before_submit.html",
+        "w",
+        encoding="utf-8"
+    ) as f:
 
+        f.write(page.content())
+    
+    # =========================
+    # 検索
+    # =========================
     print("検索実行")
 
     page.locator(
@@ -435,14 +444,15 @@ with sync_playwright() as p:
     print(page.url)
 
     page.screenshot(
-        path="11_after_search.png"
+        path="11_after_click.png"
     )
 
     with open(
-        "after_search.html",
+        "after_click.html",
         "w",
         encoding="utf-8"
     ) as f:
+
         f.write(page.content())
 
     page.wait_for_timeout(8000)
