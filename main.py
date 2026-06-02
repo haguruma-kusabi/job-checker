@@ -194,15 +194,15 @@ with sync_playwright() as p:
 
     for i in range(buttons.count()):
 
-    try:
+        try:
 
     print(
         i,
     buttons.nth(i).is_visible()
             )
     
-    except:
-    pass
+        except:
+        pass
 
     page.locator(
         "#ID_LdaiEasyShokusyuBox5"
