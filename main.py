@@ -417,7 +417,35 @@ with sync_playwright() as p:
     # =========================
     # 検索
     # =========================
+    print("検索実行")
 
+    page.locator(
+        "#ID_searchBtn"
+    ).click(force=True)
+
+    print("検索実行")
+
+    page.locator(
+        "#ID_searchBtn"
+    ).click(force=True)
+
+    page.wait_for_timeout(5000)
+
+    print("検索後URL")
+    print(page.url)
+
+    page.screenshot(
+        path="11_after_search.png"
+    )
+
+    with open(
+        "after_search.html",
+        "w",
+        encoding="utf-8"
+    ) as f:
+        f.write(page.content())
+
+    page.wait_for_timeout(8000)
     # =========================
     # 結果取得
     # =========================
