@@ -198,10 +198,10 @@ with sync_playwright() as p:
         page.locator(
             "#ID_easyShokusyuBox501"
         ).count()
-　　　　)
+    )
 
-　　　　print(
-　　　　    page.locator(
+    print(
+        page.locator(
         "#ID_modalTmpEasyShokusyuBox501"
         ).count()
     )
