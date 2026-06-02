@@ -54,6 +54,8 @@ with sync_playwright() as p:
         wait_until="networkidle"
     )
 
+    page.screenshot(path="01_top_page.png")
+
     # =========================
     # 求人検索
     # =========================
@@ -63,6 +65,8 @@ with sync_playwright() as p:
         "https://www.hellowork.mhlw.go.jp/kensaku/GECA110010.do?action=initDisp&screenId=GECA110010",
         wait_until="networkidle"
     )
+
+    page.screenshot(path="02_search_page.png")
 
     # =========================
     # 一般求人
@@ -76,6 +80,8 @@ with sync_playwright() as p:
     if ippan.count() > 0:
         ippan.first.check(force=True)
 
+    page.screenshot(path="03_after_ippan.png")
+
     # =========================
     # 就業場所
     # =========================
@@ -84,6 +90,8 @@ with sync_playwright() as p:
     page.locator("#ID_todohukenHiddenAccoBtn").click(force=True)
 
     page.wait_for_timeout(3000)
+
+    page.screenshot(path="04_prefecture_modal.png")
 
     # =========================
     # 沖縄選択
@@ -102,6 +110,8 @@ with sync_playwright() as p:
 
     page.wait_for_timeout(1000)
 
+    page.screenshot(path="05_okinawa_selected.png")
+
     # =========================
     # 決定
     # =========================
@@ -118,23 +128,56 @@ with sync_playwright() as p:
 
     page.wait_for_timeout(3000)
 
+    page.screenshot(path="06_after_prefecture_confirm.png")
+
     # =========================
     # 職種カテゴリ
     # =========================
     print("職種カテゴリ選択")
 
+    page.screenshot(path="07_before_jobtype.png")
+
     page.evaluate("""
         () => {
-            const checkbox = document.querySelector('#ID_daiEasyShokusyuBox5');
 
-            if (checkbox) {
-                checkbox.checked = true;
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+            const labels = [...document.querySelectorAll("label")];
+
+            for (const label of labels) {
+
+                if (label.innerText.includes("警備・ビル等の管理")) {
+
+                    const id = label.getAttribute("for");
+
+                    const checkbox = document.getElementById(id);
+
+                    if (checkbox) {
+
+                        checkbox.checked = true;
+
+                        checkbox.dispatchEvent(
+                            new Event('change', { bubbles:true })
+                        );
+
+                        console.log("選択成功", id);
+                    }
+                }
             }
         }
     """)
 
     page.wait_for_timeout(2000)
+
+    page.screenshot(path="08_after_jobtype.png")
+
+    # =========================
+    # 検索前確認
+    # =========================
+    print("検索実行前")
+
+    page.screenshot(path="09_before_search.png")
+
+    print("検索前URL")
+    print(page.url)
 
     # =========================
     # 検索実行
@@ -144,6 +187,8 @@ with sync_playwright() as p:
     page.locator("#ID_searchBtn").click(force=True)
 
     page.wait_for_timeout(5000)
+
+    page.screenshot(path="10_after_search.png")
 
     # =========================
     # 結果表示
@@ -158,6 +203,14 @@ with sync_playwright() as p:
 
     print("\n===== 検索結果先頭 =====\n")
     print(body_text[:5000])
+
+    # HTMLも保存
+    with open("result.html", "w", encoding="utf-8") as f:
+        f.write(page.content())
+
+    # BODY全文も保存
+    with open("body.txt", "w", encoding="utf-8") as f:
+        f.write(body_text)
 
     # =========================
     # 求人抽出
