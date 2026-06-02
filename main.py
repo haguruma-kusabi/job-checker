@@ -479,6 +479,12 @@ with sync_playwright() as p:
         "w",
         encoding="utf-8"
     ) as f:
+        print(
+        body_text[
+            body_text.find("検索結果"):
+            body_text.find("検索結果")+5000
+        ]
+    )
 
         f.write(body_text)
 
@@ -491,6 +497,10 @@ with sync_playwright() as p:
 
     pattern = r"職種\s+(.*?)\s+職種解説"
 
+    print("職種解説件数")
+    print(
+        body_text.count("職種解説")
+    )
     jobs = re.findall(
         pattern,
         body_text,
