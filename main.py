@@ -607,46 +607,46 @@ with sync_playwright() as p:
 
     print(f"\n=== 求人{i} ===")
 
-        title = re.search(
-            r"職種\s+(.*?)\s+職種解説",
-            block,
-            re.S
-        )
+    title = re.search(
+        r"職種\s+(.*?)\s+職種解説",
+        block,
+        re.S
+    )
 
-        company = re.search(
-            r"事業所名\s+(.*?)\s+就業場所",
-            block,
-            re.S
-        )
+    company = re.search(
+        r"事業所名\s+(.*?)\s+就業場所",
+        block,
+        re.S
+    )
 
-        location = re.search(
-            r"就業場所\s+(.*?)\s+賃金",
-            block,
-            re.S
-        )
+    location = re.search(
+        r"就業場所\s+(.*?)\s+賃金",
+        block,
+        re.S
+    )
 
-        salary = re.search(
-            r"(\d[\d,]*)円〜(\d[\d,]*)円",
-            block
-        )
+    salary = re.search(
+        r"(\d[\d,]*)円〜(\d[\d,]*)円",
+        block
+    )
 
-        print(
-            "職種:",
-            title.group(1).strip()
-            if title else "取得失敗"
-        )
+    print(
+        "職種:",
+        title.group(1).strip()
+        if title else "取得失敗"
+    )
 
-        print(
-            "会社:",
-            company.group(1).strip()
-            if company else "取得失敗"
-        )
+    print(
+        "会社:",
+        company.group(1).strip()
+        if company else "取得失敗"
+    )
 
-        print(
-            "勤務地:",
-            location.group(1).strip()
-            if location else "取得失敗"
-        )
+    print(
+        "勤務地:",
+        location.group(1).strip()
+        if location else "取得失敗"
+    )
 
         if salary:
 
