@@ -489,7 +489,7 @@ with sync_playwright() as p:
     print(matches[:10])
 
     print("件数:", len(matches))
-        print(
+    print(
         body_text[
             body_text.find("検索結果"):
             body_text.find("検索結果")+5000
