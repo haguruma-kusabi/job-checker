@@ -479,7 +479,10 @@ with sync_playwright() as p:
         "w",
         encoding="utf-8"
     ) as f:
-        print("\n===== 求人区切り確認 =====\n")
+
+        f.write(body_text)
+
+    print("\n===== 求人区切り確認 =====\n")
 
     matches = re.findall(
         r"===\s*求人\d+\s*===",
@@ -489,14 +492,13 @@ with sync_playwright() as p:
     print(matches[:10])
 
     print("件数:", len(matches))
+
     print(
         body_text[
             body_text.find("検索結果"):
-            body_text.find("検索結果")+5000
+            body_text.find("検索結果") + 5000
         ]
     )
-
-    f.write(body_text)
 
     print(body_text[:5000])
 
