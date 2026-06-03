@@ -526,6 +526,8 @@ with sync_playwright() as p:
     
     print("\n===== 項目抽出テスト =====\n")
 
+    jobs_data = []
+
     for i, block in enumerate(
         blocks[1:],
         start=1
@@ -586,80 +588,33 @@ with sync_playwright() as p:
                 .replace(",", "")
             )
 
-    if not title:
-        continue
+        if not title:
+            continue
 
-    job = {
-        "title": title_text,
-        "company": company_text,
-        "location": location_text,
-        "salary_min": salary_min,
-        "salary_max": salary_max
-    }
+        job = {
+            "title": title_text,
+            "company": company_text,
+            "location": location_text,
+            "salary_min": salary_min,
+            "salary_max": salary_max
+        }
 
-    jobs_data.append(job)
+        jobs_data.append(job)
 
-    print("\n===== 辞書化確認 =====\n")
-
-    print("件数:", len(jobs_data))
-
-    print(jobs_data[:3])
-
-    print(f"\n=== 求人{i} ===")
-
-    title = re.search(
-        r"職種\s+(.*?)\s+職種解説",
-        block,
-        re.S
-    )
-
-    company = re.search(
-        r"事業所名\s+(.*?)\s+就業場所",
-        block,
-        re.S
-    )
-
-    location = re.search(
-        r"就業場所\s+(.*?)\s+賃金",
-        block,
-        re.S
-    )
-
-    salary = re.search(
-        r"(\d[\d,]*)円〜(\d[\d,]*)円",
-        block
-    )
-
-    print(
-        "職種:",
-        title.group(1).strip()
-        if title else "取得失敗"
-    )
-
-    print(
-        "会社:",
-        company.group(1).strip()
-        if company else "取得失敗"
-    )
-
-    print(
-        "勤務地:",
-        location.group(1).strip()
-        if location else "取得失敗"
-    )
-
-    if salary:
-
+        print(f"\n=== 求人{i} ===")
+        print("職種:", title_text)
+        print("会社:", company_text)
+        print("勤務地:", location_text)
         print(
             "給与:",
-            salary.group(1),
+            salary_min,
             "~",
-            salary.group(2)
+            salary_max
         )
 
-    else:
-
-        print("給与:取得失敗")
+    print("\n===== 辞書化確認 =====\n")
+    print("件数:", len(jobs_data))
+    print(jobs_data[:3])
 
     print("\n===== 最終ブロック確認 =====\n")
 
