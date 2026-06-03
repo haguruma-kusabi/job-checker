@@ -657,6 +657,10 @@ with sync_playwright() as p:
         else:
 
             print("給与:取得失敗")
+
+    print("\n===== 最終ブロック確認 =====\n")
+
+    print(blocks[-1][:3000])
     
     print("\n===== 職種件数確認 =====\n")
 
