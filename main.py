@@ -496,7 +496,7 @@ with sync_playwright() as p:
         ]
     )
 
-        f.write(body_text)
+    f.write(body_text)
 
     print(body_text[:5000])
 
