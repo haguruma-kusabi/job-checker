@@ -648,18 +648,18 @@ with sync_playwright() as p:
         if location else "取得失敗"
     )
 
-        if salary:
+    if salary:
 
-            print(
-                "給与:",
-                salary.group(1),
-                "~",
-                salary.group(2)
-            )
+        print(
+            "給与:",
+            salary.group(1),
+            "~",
+            salary.group(2)
+        )
 
-        else:
+    else:
 
-            print("給与:取得失敗")
+        print("給与:取得失敗")
 
     print("\n===== 最終ブロック確認 =====\n")
 
