@@ -501,6 +501,26 @@ with sync_playwright() as p:
     )
 
     print(body_text[:5000])
+
+    print("\n===== 求人分割テスト =====\n")
+
+    blocks = re.split(
+        r"求人票を表示",
+        body_text
+    )
+
+    print("分割数:", len(blocks))
+
+    for i, block in enumerate(
+        blocks[:3],
+        start=1
+    ):
+
+        print(f"\n--- ブロック{i} ---")
+
+        print(
+            block[-500:]
+        )
     
     print("\n===== 職種件数確認 =====\n")
 
