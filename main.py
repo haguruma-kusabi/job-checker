@@ -501,6 +501,28 @@ with sync_playwright() as p:
     )
 
     print(body_text[:5000])
+    
+    print("\n===== 職種件数確認 =====\n")
+
+    print(
+        "職種件数:",
+        body_text.count("職種")
+    )
+
+    print(
+        "職種解説件数:",
+        body_text.count("職種解説")
+    )
+
+    print(
+        "求人票を表示件数:",
+        body_text.count("求人票を表示")
+    )
+
+    print(
+        "詳細を表示件数:",
+        body_text.count("詳細を表示")
+    )
 
     # =========================
     # 求人抽出
