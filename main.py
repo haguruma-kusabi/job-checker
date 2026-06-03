@@ -586,7 +586,7 @@ with sync_playwright() as p:
                 .replace(",", "")
             )
 
-        if not title:
+    if not title:
         continue
 
     job = {
