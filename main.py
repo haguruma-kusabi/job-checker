@@ -599,13 +599,13 @@ with sync_playwright() as p:
 
     jobs_data.append(job)
 
-        print("\n===== 辞書化確認 =====\n")
+    print("\n===== 辞書化確認 =====\n")
 
-        print("件数:", len(jobs_data))
+    print("件数:", len(jobs_data))
 
-        print(jobs_data[:3])
+    print(jobs_data[:3])
 
-        print(f"\n=== 求人{i} ===")
+    print(f"\n=== 求人{i} ===")
 
         title = re.search(
             r"職種\s+(.*?)\s+職種解説",
