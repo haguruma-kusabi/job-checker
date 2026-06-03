@@ -586,15 +586,18 @@ with sync_playwright() as p:
                 .replace(",", "")
             )
 
-        job = {
-            "title": title_text,
-            "company": company_text,
-            "location": location_text,
-            "salary_min": salary_min,
-            "salary_max": salary_max
-        }
+        if not title:
+        continue
 
-        jobs_data.append(job)
+    job = {
+        "title": title_text,
+        "company": company_text,
+        "location": location_text,
+        "salary_min": salary_min,
+        "salary_max": salary_max
+    }
+
+    jobs_data.append(job)
 
         print("\n===== 辞書化確認 =====\n")
 
