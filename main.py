@@ -522,12 +522,79 @@ with sync_playwright() as p:
             block[-500:]
         )
 
+    jobs_data = []
+    
     print("\n===== 項目抽出テスト =====\n")
 
     for i, block in enumerate(
-        blocks[1:4],
+        blocks[1:],
         start=1
     ):
+
+        title = re.search(
+            r"職種\s+(.*?)\s+職種解説",
+            block,
+            re.S
+        )
+
+        company = re.search(
+            r"事業所名\s+(.*?)\s+就業場所",
+            block,
+            re.S
+        )
+
+        location = re.search(
+            r"就業場所\s+(.*?)\s+賃金",
+            block,
+            re.S
+        )
+
+        salary = re.search(
+            r"(\d[\d,]*)円〜(\d[\d,]*)円",
+            block
+        )
+
+        title_text = (
+            title.group(1).strip()
+            if title else ""
+        )
+
+        company_text = (
+            company.group(1)
+            .replace("画像あり", "")
+            .strip()
+            if company else ""
+        )
+
+        location_text = (
+            location.group(1).strip()
+            if location else ""
+        )
+
+        salary_min = 0
+        salary_max = 0
+
+        if salary:
+
+            salary_min = int(
+                salary.group(1)
+                .replace(",", "")
+            )
+
+            salary_max = int(
+                salary.group(2)
+                .replace(",", "")
+            )
+
+        job = {
+            "title": title_text,
+            "company": company_text,
+            "location": location_text,
+            "salary_min": salary_min,
+            "salary_max": salary_max
+        }
+
+        jobs_data.append(job)
 
         print(f"\n=== 求人{i} ===")
 
